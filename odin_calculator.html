@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odin Feature-Complete Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .font-mono-num {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom subtle glassmorphism visual accents */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .btn-glow:active {
+            transform: scale(0.96);
+        }
+        .active-operator {
+            background-color: #f59e0b !important; /* amber-500 */
+            color: #ffffff !important;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
+
+    <main class="w-full max-w-sm glass-card rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+        
+        <!-- Subtle Ambient Background Glows -->
+        <div class="absolute -top-16 -left-16 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute -bottom-16 -right-16 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none"></div>
+
+        <!-- Calculator Header / Brand -->
+        <div class="flex justify-between items-center mb-4 px-1">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Odin Calc</span>
+            <span class="inline-flex items-center gap-1.5 text-xs text-slate-400">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ready
+            </span>
+        </div>
+
+        <div class="bg-slate-900/90 rounded-2xl p-4 mb-5 border border-slate-800/80 shadow-inner flex flex-col justify-between h-28 text-right overflow-hidden transition-all">
+            <!-- Equation History / Operation Preview -->
+            <div id="history-display" class="font-mono-num text-xs text-slate-400 min-h-[1.25rem] truncate tracking-tight">
+                <!-- E.g. "12 + 7 =" -->
+            </div>
+            
+            <!-- Main Current Value Display -->
+            <div id="main-display" class="font-mono-num text-3xl font-bold text-white truncate tracking-tight flex items-center justify-end">
+                0
+            </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2.5">
+            
+            <!-- Row 1: Clear, Backspace, Modulo/Percent, Divide -->
+            <button data-action="clear" class="btn-glow col-span-1 bg-slate-800 hover:bg-rose-900/40 hover:text-rose-400 text-slate-200 font-semibold py-3.5 rounded-xl transition-all duration-150 flex items-center justify-center border border-slate-700/50 active:bg-rose-800" title="Clear (Esc)">
+                AC
+            </button>
+            <button data-action="backspace" class="btn-glow col-span-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3.5 rounded-xl transition-all duration-150 flex items-center justify-center border border-slate-700/50 active:bg-slate-600" title="Backspace (Backspace)">
+                ⌫
+            </button>
+            <button data-action="operator" data-val="%" class="btn-glow col-span-1 bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold py-3.5 rounded-xl transition-all duration-150 flex items-center justify-center border border-slate-700/50 active:bg-slate-600">
+                %
+            </button>
+            <button data-action="operator" data-val="÷" class="btn-glow col-span-1 bg-slate-800 hover:bg-amber-500 hover:text-white text-amber-400 font-semibold text-lg py-3.5 rounded-xl transition-all duration-150 flex items-center justify-center border border-slate-700/50 active:bg-amber-600">
+                ÷
+            </button>
+
+            <!-- Row 2: 7, 8, 9, Multiply -->
+            <button data-action="digit" data-val="7" class="btn-glow bg-slate-800/80 hover:bg-slate-700 text-slate-100 font-medium text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/40 active:bg-slate-600">7</button>
+            <button data-action="digit" data-val="8" class="btn-glow bg-slate-800/80 hover:bg-slate-700 text-slate-100 font-medium text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/40 active:bg-slate-600">8</button>
+            <button data-action="digit" data-val="9" class="btn-glow bg-slate-800/80 hover:bg-slate-700 text-slate-100 font-medium text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/40 active:bg-slate-600">9</button>
+            <button data-action="operator" data-val="×" class="btn-glow bg-slate-800 hover:bg-amber-500 hover:text-white text-amber-400 font-semibold text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/50 active:bg-amber-600">×</button>
+
+            <!-- Row 3: 4, 5, 6, Subtract -->
+            <button data-action="digit" data-val="4" class="btn-glow bg-slate-800/80 hover:bg-slate-700 text-slate-100 font-medium text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/40 active:bg-slate-600">4</button>
+            <button data-action="digit" data-val="5" class="btn-glow bg-slate-800/80 hover:bg-slate-700 text-slate-100 font-medium text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/40 active:bg-slate-600">5</button>
+            <button data-action="digit" data-val="6" class="btn-glow bg-slate-800/80 hover:bg-slate-700 text-slate-100 font-medium text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/40 active:bg-slate-600">6</button>
+            <button data-action="operator" data-val="-" class="btn-glow bg-slate-800 hover:bg-amber-500 hover:text-white text-amber-400 font-semibold text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/50 active:bg-amber-600">−</button>
+
+            <!-- Row 4: 1, 2, 3, Add -->
+            <button data-action="digit" data-val="1" class="btn-glow bg-slate-800/80 hover:bg-slate-700 text-slate-100 font-medium text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/40 active:bg-slate-600">1</button>
+            <button data-action="digit" data-val="2" class="btn-glow bg-slate-800/80 hover:bg-slate-700 text-slate-100 font-medium text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/40 active:bg-slate-600">2</button>
+            <button data-action="digit" data-val="3" class="btn-glow bg-slate-800/80 hover:bg-slate-700 text-slate-100 font-medium text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/40 active:bg-slate-600">3</button>
+            <button data-action="operator" data-val="+" class="btn-glow bg-slate-800 hover:bg-amber-500 hover:text-white text-amber-400 font-semibold text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/50 active:bg-amber-600">+</button>
+
+            <!-- Row 5: 0, Decimal, Equals -->
+            <button data-action="digit" data-val="0" class="btn-glow col-span-2 bg-slate-800/80 hover:bg-slate-700 text-slate-100 font-medium text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/40 active:bg-slate-600 text-left px-6">0</button>
+            <button data-action="decimal" class="btn-glow bg-slate-800/80 hover:bg-slate-700 text-slate-100 font-medium text-lg py-3.5 rounded-xl transition-all duration-150 border border-slate-700/40 active:bg-slate-600">.</button>
+            <button data-action="equals" class="btn-glow bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-lg py-3.5 rounded-xl transition-all duration-150 border border-indigo-500/50 shadow-lg shadow-indigo-600/30 active:bg-indigo-700">=</button>
+        </div>
+
+        <!-- Keyboard Shortcut Helper Footer -->
+        <div class="mt-5 text-center text-[10px] text-slate-500 font-medium tracking-wide">
+            Keyboard enabled: <span class="text-slate-400">0-9, +, -, *, /, Enter, Backspace, Esc</span>
+        </div>
+    </main>
+
+    <script>
+        function add(a, b) {
+            return a + b;
+        }
+
+        function subtract(a, b) {
+            return a - b;
+        }
+
+        function multiply(a, b) {
+            return a * b;
+        }
+
+        function divide(a, b) {
+            if (b === 0) {
+                return "Nice try, Einstein! 🤡";
+            }
+            return a / b;
+        }
+
+        function modulo(a, b) {
+            if (b === 0) {
+                return "Nope! ÷0 prohibited";
+            }
+            return a % b;
+        }
+
+        /**
+         * Operates on two numbers given a operator string
+         */
+        function operate(operator, a, b) {
+            const numA = Number(a);
+            const numB = Number(b);
+
+            switch (operator) {
+                case '+':
+                    return add(numA, numB);
+                case '-':
+                case '−':
+                    return subtract(numA, numB);
+                case '×':
+                case '*':
+                    return multiply(numA, numB);
+                case '÷':
+                case '/':
+                    return divide(numA, numB);
+                case '%':
+                    return modulo(numA, numB);
+                default:
+                    return b;
+            }
+        }
+
+        let firstNum = null;
+        let currentOperator = null;
+        let secondNum = null;
+        let shouldResetDisplay = false; // Flag to reset display on next digit entry
+        let isEvaluated = false;       // Flag set when '=' has just been pressed
+
+        // DOM Element References
+        const mainDisplay = document.getElementById('main-display');
+        const historyDisplay = document.getElementById('history-display');
+        const operatorButtons = document.querySelectorAll('button[data-action="operator"]');
+
+        /**
+         * Safely rounds decimal numbers to prevent screen overflow
+         */
+        function roundResult(number) {
+            if (typeof number === 'string') return number; // Error messages pass through
+            if (isNaN(number) || !isFinite(number)) return "Error";
+            
+            // Limit precision to avoid JavaScript floating point errors like 0.1 + 0.2
+            return Math.round(number * 100000000) / 100000000;
+        }
+
+        function updateMainDisplay(value) {
+            mainDisplay.textContent = value;
+        }
+
+        function updateHistoryDisplay(text) {
+            historyDisplay.textContent = text;
+        }
+
+        function clearActiveOperatorStyles() {
+            operatorButtons.forEach(btn => btn.classList.remove('active-operator'));
+        }
+
+        function highlightActiveOperator(opSymbol) {
+            clearActiveOperatorStyles();
+            operatorButtons.forEach(btn => {
+                if (btn.dataset.val === opSymbol) {
+                    btn.classList.add('active-operator');
+                }
+            });
+        }
+
+        
+        /**
+         * Appends digits (0-9) to current display string
+         */
+        function handleDigit(digit) {
+            clearActiveOperatorStyles();
+
+            // If we just pressed equals or need display reset
+            if (shouldResetDisplay || isEvaluated) {
+                if (isEvaluated) {
+                    // Start completely fresh calculation
+                    firstNum = null;
+                    currentOperator = null;
+                    secondNum = null;
+                    updateHistoryDisplay('');
+                }
+                mainDisplay.textContent = digit;
+                shouldResetDisplay = false;
+                isEvaluated = false;
+            } else {
+                // If display currently shows "0", replace it unless it's appending
+                if (mainDisplay.textContent === '0') {
+                    mainDisplay.textContent = digit;
+                } else {
+                    mainDisplay.textContent += digit;
+                }
+            }
+        }
+
+        /**
+         * Adds decimal separator with validation
+         */
+        function handleDecimal() {
+            clearActiveOperatorStyles();
+
+            if (isEvaluated || shouldResetDisplay) {
+                if (isEvaluated) {
+                    firstNum = null;
+                    currentOperator = null;
+                    secondNum = null;
+                    updateHistoryDisplay('');
+                }
+                mainDisplay.textContent = '0.';
+                shouldResetDisplay = false;
+                isEvaluated = false;
+                return;
+            }
+
+            // Prevent multiple decimals in single operand
+            if (!mainDisplay.textContent.includes('.')) {
+                mainDisplay.textContent += '.';
+            }
+        }
+
+        /**
+         * Handles operator selections (+, -, *, /, %)
+         */
+        function handleOperator(nextOperator) {
+            const currentVal = mainDisplay.textContent;
+
+            // If an error state is on screen, clear it
+            if (typeof currentVal === 'string' && isNaN(Number(currentVal)) && currentVal.includes('!')) {
+                handleClear();
+                return;
+            }
+
+            // Case A: User presses consecutive operators without entering a new number
+            if (currentOperator !== null && shouldResetDisplay) {
+                currentOperator = nextOperator;
+                highlightActiveOperator(nextOperator);
+                updateHistoryDisplay(`${firstNum} ${currentOperator}`);
+                return;
+            }
+
+            // Case B: First operator pressed
+            if (firstNum === null) {
+                firstNum = Number(currentVal);
+            } 
+            // Case C: Chain evaluation (e.g. 12 + 7 -)
+            else if (currentOperator !== null) {
+                secondNum = Number(currentVal);
+                const result = roundResult(operate(currentOperator, firstNum, secondNum));
+
+                // If snarky error returned (e.g. ÷ 0)
+                if (typeof result === 'string') {
+                    updateMainDisplay(result);
+                    updateHistoryDisplay('');
+                    firstNum = null;
+                    currentOperator = null;
+                    secondNum = null;
+                    shouldResetDisplay = true;
+                    clearActiveOperatorStyles();
+                    return;
+                }
+
+                firstNum = result;
+                updateMainDisplay(result);
+            }
+
+            currentOperator = nextOperator;
+            highlightActiveOperator(nextOperator);
+            updateHistoryDisplay(`${firstNum} ${currentOperator}`);
+            shouldResetDisplay = true;
+            isEvaluated = false;
+        }
+
+        /**
+         * Evaluates equation on '=' press
+         */
+        function handleEquals() {
+            clearActiveOperatorStyles();
+
+            // Guard: Cannot evaluate without first number & operator
+            if (firstNum === null || currentOperator === null) {
+                return;
+            }
+
+            // If user repeatedly hits '=' after evaluation, repeat operation on new result
+            if (isEvaluated) {
+                firstNum = Number(mainDisplay.textContent);
+            } else {
+                secondNum = Number(mainDisplay.textContent);
+            }
+
+            updateHistoryDisplay(`${firstNum} ${currentOperator} ${secondNum} =`);
+
+            const result = roundResult(operate(currentOperator, firstNum, secondNum));
+
+            updateMainDisplay(result);
+
+            if (typeof result === 'string') {
+                // Snarky error occurred
+                firstNum = null;
+                currentOperator = null;
+                secondNum = null;
+            } else {
+                firstNum = result;
+            }
+
+            shouldResetDisplay = true;
+            isEvaluated = true;
+        }
+
+        /**
+         * Full reset (AC)
+         */
+        function handleClear() {
+            firstNum = null;
+            currentOperator = null;
+            secondNum = null;
+            shouldResetDisplay = false;
+            isEvaluated = false;
+            updateMainDisplay('0');
+            updateHistoryDisplay('');
+            clearActiveOperatorStyles();
+        }
+
+        /**
+         * Backspace / Undo last character
+         */
+        function handleBackspace() {
+            // Cannot backspace when result was just evaluated or after error
+            if (isEvaluated || shouldResetDisplay) {
+                return;
+            }
+
+            const current = mainDisplay.textContent;
+            if (current.length === 1 || (current.length === 2 && current.startsWith('-'))) {
+                mainDisplay.textContent = '0';
+            } else {
+                mainDisplay.textContent = current.slice(0, -1);
+            }
+        }
+
+        
+        // UI Button Click Event Delegation
+        document.querySelector('main').addEventListener('click', (e) => {
+            const target = e.target.closest('button');
+            if (!target) return;
+
+            const action = target.dataset.action;
+            const val = target.dataset.val;
+
+            switch (action) {
+                case 'digit':
+                    handleDigit(val);
+                    break;
+                case 'decimal':
+                    handleDecimal();
+                    break;
+                case 'operator':
+                    handleOperator(val);
+                    break;
+                case 'equals':
+                    handleEquals();
+                    break;
+                case 'clear':
+                    handleClear();
+                    break;
+                case 'backspace':
+                    handleBackspace();
+                    break;
+            }
+        });
+
+        // Keyboard Support Mapping
+        window.addEventListener('keydown', (e) => {
+            // Prevent scrolling on spacebar/enter if buttons focused
+            if (['/', '*', '+', '-', '='].includes(e.key)) {
+                e.preventDefault();
+            }
+
+            // Digits 0-9
+            if (e.key >= '0' && e.key <= '9') {
+                handleDigit(e.key);
+                triggerVisualFeedback(e.key);
+            }
+            // Operators
+            else if (e.key === '+') {
+                handleOperator('+');
+                triggerVisualFeedback('+');
+            } else if (e.key === '-') {
+                handleOperator('−');
+                triggerVisualFeedback('−');
+            } else if (e.key === '*') {
+                handleOperator('×');
+                triggerVisualFeedback('×');
+            } else if (e.key === '/') {
+                handleOperator('÷');
+                triggerVisualFeedback('÷');
+            } else if (e.key === '%') {
+                handleOperator('%');
+                triggerVisualFeedback('%');
+            }
+            // Equals / Enter
+            else if (e.key === 'Enter' || e.key === '=') {
+                handleEquals();
+                triggerVisualFeedback('=');
+            }
+            // Decimal
+            else if (e.key === '.') {
+                handleDecimal();
+                triggerVisualFeedback('.');
+            }
+            // Backspace
+            else if (e.key === 'Backspace') {
+                handleBackspace();
+                triggerVisualFeedback('⌫');
+            }
+            // Clear (Escape or 'c' / 'C')
+            else if (e.key === 'Escape' || e.key.toLowerCase() === 'c') {
+                handleClear();
+                triggerVisualFeedback('AC');
+            }
+        });
+
+        /**
+         * Provides temporary visual press highlight for corresponding keyboard inputs
+         */
+        function triggerVisualFeedback(symbol) {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            const match = buttons.find(b => 
+                b.dataset.val === symbol || 
+                b.textContent.trim() === symbol ||
+                (symbol === '=' && b.dataset.action === 'equals') ||
+                (symbol === 'AC' && b.dataset.action === 'clear') ||
+                (symbol === '⌫' && b.dataset.action === 'backspace')
+            );
+
+            if (match) {
+                match.classList.add('ring-2', 'ring-indigo-400', 'scale-95');
+                setTimeout(() => {
+                    match.classList.remove('ring-2', 'ring-indigo-400', 'scale-95');
+                }, 120);
+            }
+        }
+    </script>
+</body>
+</html>
